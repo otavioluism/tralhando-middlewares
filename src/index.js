@@ -10,20 +10,89 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+
+  if (!username) { 
+    return response.status(400).json({error: "Dont exists username!"});
+  }
+
+  const user = users.find(item => { 
+    return item.username === username
+  });
+
+  if(!user) { 
+    return response.status(404).json({error: "Dont found any user!"});
+  }
+
+  request.user = user;
+
+  next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const { user } = request;
+
+  if (user.pro === false) { 
+
+    if(user.todos.length >= 0 && user.todos.length < 10) { 
+      next();
+    } else { 
+      return response.status(403).json({error: "This user cant create more a new todo, for your free plan!"})
+    }
+
+  } else if (user.pro === true) { 
+    next();
+  }
+
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
-}
+    const { username } = request.headers;
+    const { id } = request.params;
+
+    const user = users.find(item => { 
+      return item.username === username;
+    })
+
+    if (!user) { 
+      return response.status(404).json({error: "This user dont exists!"});
+    }
+
+    const validateUUID = validate(id);
+
+    if (!validateUUID) { 
+      return response.status(400).json({error: "This id isnt valid!"});
+    }
+
+    const ExistsIdForOneUser = user.todos.find(item => { 
+      return item.id === id;
+    });
+
+    if(!ExistsIdForOneUser) { 
+      return response.status(404).json({error: "This Id inst of one TODO!"});
+    }
+
+    request.user = user;
+    request.todo = ExistsIdForOneUser;
+
+    next();
+} 
 
 function findUserById(request, response, next) {
-  // Complete aqui
-}
+  const { id } = request.params;
+  
+  const user = users.find(item => { 
+    return item.id === id;
+  })
+
+  if (!user) { 
+    return response.status(404).json({error: "This user does not exists!"});
+  }
+
+  request.user = user;
+
+  next();
+} 
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
